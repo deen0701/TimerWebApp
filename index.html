@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Circular Countdown Timer</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background-color: rgb(14, 71, 94);
+    }
+
+    #timer {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto;
+      border: 1px solid #ccc;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      background-color: grey;
+      cursor: pointer;
+    }
+
+    #knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(0deg);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  background: linear-gradient(#f0f0f0, #ccc);
+  border: 5px solid #333;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  overflow: hidden; /* Add overflow: hidden to hide overflowing markers */
+}
+
+#knob::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 15px;
+  background-color: #333;
+}
+
+
+
+    #dial {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px; /* Adjust the size of the dial */
+      height: 2px; /* Adjust the size of the dial */
+      background-color: #333;
+}
+
+
+
+    #countdown {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 20px;
+      color: black;
+    }
+
+   
+
+    
+  </style>
+</head>
+<body>
+  <h1>Circular Countdown Timer</h1>
+  <div id="timer">
+    <div id="knob" onmousedown="startRotation(event)">
+      <div id="time-markers"></div> <!-- Move the time markers inside the knob -->
+    </div>
+    <div id="countdown">00:00</div>
+  </div>
+  
+  
+
+  <script>
+    var countdownDuration = 0; // Initial duration in seconds
+    var countdownInterval;
+    var countdownElement = document.getElementById("countdown");
+    var knobElement = document.getElementById("knob");
+    var indicatorElement = document.getElementById("indicator");
+    var rotationAngle = 0;
+    var isRotating = false; // Track if the knob is being rotated
+
+    var markersCount = 12; // Number of time markers on the wheel
+    var markerAngle = 360 / markersCount;
+    
+    var sensitivity = 1.2; // Adjust the sensitivity value as desired
+
+    var timerElement = document.getElementById("timer");
+
+function startRotation(event) {
+  var initialX = event.clientX;
+  var initialY = event.clientY;
+
+  document.onmousemove = function(event) {
+    var currentX = event.clientX;
+    var currentY = event.clientY;
+
+    var angle = calculateAngle(initialX, initialY, currentX, currentY);
+    rotateKnob(angle);
+    updateCountdown(angle);
+  };
+
+  document.onmouseup = function(event) {
+    document.onmousemove = null;
+    document.onmouseup = null;
+  };
+}
+
+timerElement.addEventListener("mousedown", function(event) {
+  var knobElement = document.getElementById("knob");
+  var knobRect = knobElement.getBoundingClientRect();
+
+  // Check if the mouse click is within the knob element
+  if (
+    event.clientX >= knobRect.left &&
+    event.clientX <= knobRect.right &&
+    event.clientY >= knobRect.top &&
+    event.clientY <= knobRect.bottom
+  ) {
+    startRotation(event);
+  }
+});
+
+
+
+
+    function calculateAngle(initialX, initialY, currentX, currentY) {
+      var centerX = window.innerWidth / 2;
+      var centerY = window.innerHeight / 2;
+      var angle = Math.atan2(currentY - centerY, currentX - centerX) * (180 / Math.PI);
+      var initialAngle = Math.atan2(initialY - centerY, initialX - centerX) * (180 / Math.PI);
+
+      var angleDiff = angle - initialAngle;
+      if (angleDiff < -180) {
+        angleDiff += 360;
+      } else if (angleDiff > 180) {
+        angleDiff -= 360;
+      }
+
+      var newAngle = rotationAngle + angleDiff;
+      if (newAngle < 0) {
+        newAngle = 0;
+      } else if (newAngle > 360) {
+        newAngle = 360;
+      }
+
+      return newAngle;
+    }
+
+    function rotateKnob(angle) {
+    rotationAngle = angle;
+    var knob = document.getElementById("knob");
+    knob.style.transform = "translate(-50%, -50%) rotate(" + -rotationAngle + "deg)"; // Negate the rotationAngle
+    
+  
+}
+
+
+    function updateCountdown(angle) {
+      // Calculate the duration based on the rotation angle
+      var duration = Math.round(angle / markerAngle) * 5 * 60; // Each marker represents 5 minutes
+      countdownDuration = duration;
+
+      // Update the countdown display
+      var minutes = Math.floor(duration / 60);
+      var seconds = duration % 60;
+      var timeString = formatTime(minutes) + ":" + formatTime(seconds);
+      countdownElement.textContent = timeString;
+    }
+
+    function formatTime(value) {
+      return value < 10 ? "0" + value : value;
+    }
+
+    function startTimer() {
+  var startTime = Date.now();
+  var previousDuration = countdownDuration;
+
+  function updateTimer() {
+    var currentTime = Date.now();
+    var elapsedTime = currentTime - startTime;
+    var currentDuration = Math.max(previousDuration - Math.floor(elapsedTime / 1000), 0);
+
+    if (currentDuration !== countdownDuration) {
+      countdownDuration = currentDuration;
+
+      var minutes = Math.floor(countdownDuration / 60);
+      var seconds = countdownDuration % 60;
+      var timeString = formatTime(minutes) + ":" + formatTime(seconds);
+      countdownElement.textContent = timeString;
+    }
+
+    if (countdownDuration > 0) {
+      requestAnimationFrame(updateTimer);
+    }
+  }
+
+  requestAnimationFrame(updateTimer);
+}
+
+
+    document.getElementById("timer").addEventListener("click", function() {
+      startTimer();
+    });
+  </script>
+</body>
+</html>
